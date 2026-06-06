@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Agenda — ORYGN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --negro: #050505;
+      --naranja: #E8602A;
+      --naranja-dark: #c94e1f;
+      --naranja-soft: rgba(232,96,42,0.12);
+      --gris-oscuro: #111111;
+      --gris-medio: #1a1a1a;
+      --gris-borde: rgba(255,255,255,0.08);
+      --texto: #f0f0f0;
+      --texto-suave: #888;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--negro);
+      color: var(--texto);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px 12px;
+      position: sticky;
+      top: 0;
+      background: var(--negro);
+      z-index: 100;
+      border-bottom: 1px solid var(--gris-borde);
+    }
+
+    .topbar-back {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      color: var(--texto);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 2px;
+      flex: 1;
+    }
+
+    .topbar-title span { color: var(--naranja); }
+
+    /* NAVEGACIÓN MES */
+    .mes-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+    }
+
+    .mes-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      border-radius: 10px;
+      color: var(--texto);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+    }
+
+    .mes-btn:hover { border-color: var(--naranja); color: var(--naranja); }
+
+    .mes-nombre {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 3px;
+      color: var(--texto);
+      text-align: center;
+    }
+
+    .mes-nombre span { color: var(--naranja); }
+
+    /* DÍAS SEMANA */
+    .dias-semana {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 0 16px;
+      margin-bottom: 4px;
+    }
+
+    .dia-semana-lbl {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--texto-suave);
+      padding: 4px 0;
+      text-transform: uppercase;
+    }
+
+    /* CUADRÍCULA CALENDARIO */
+    .calendario-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      padding: 0 16px 16px;
+    }
+
+    .dia-celda {
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      border-radius: 8px;
+      min-height: 72px;
+      padding: 5px 4px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dia-celda.vacio {
+      background: transparent;
+      border-color: transparent;
+      cursor: default;
+    }
+
+    .dia-celda.hoy {
+      border-color: var(--naranja);
+      background: rgba(232,96,42,0.06);
+    }
+
+    .dia-celda.tiene-citas {
+      border-color: rgba(232,96,42,0.3);
+    }
+
+    .dia-celda.tiene-citas:hover {
+      border-color: var(--naranja);
+    }
+
+    .dia-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texto-suave);
+      margin-bottom: 3px;
+      line-height: 1;
+    }
+
+    .dia-celda.hoy .dia-num {
+      color: var(--naranja);
+    }
+
+    .cita-chip {
+      background: rgba(232,96,42,0.18);
+      border-radius: 3px;
+      padding: 2px 3px;
+      font-size: 8px;
+      color: var(--naranja);
+      line-height: 1.3;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .cita-chip.vencida {
+      background: rgba(248,113,113,0.18);
+      color: #f87171;
+    }
+
+    .mas-citas {
+      font-size: 8px;
+      color: var(--texto-suave);
+      display: block;
+      margin-top: 1px;
+    }
+
+    /* MODAL DETALLE DÍA */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: flex-end;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--gris-oscuro);
+      border-radius: 20px 20px 0 0;
+      border-top: 1px solid var(--gris-borde);
+      padding: 16px 20px 32px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open .modal-sheet {
+      transform: translateY(0);
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 3px;
+      background: var(--gris-borde);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .modal-fecha-titulo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      color: var(--texto);
+    }
+
+    .modal-fecha-titulo span { color: var(--naranja); }
+
+    .modal-cita-item {
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+    }
+
+    .modal-cita-hora {
+      font-size: 11px;
+      color: var(--naranja);
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .modal-cita-hora.vencida { color: #f87171; }
+
+    .modal-cita-nombre {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--texto);
+      margin-bottom: 2px;
+    }
+
+    .modal-cita-asunto {
+      font-size: 12px;
+      color: var(--texto-suave);
+    }
+
+    .modal-cita-etapa {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(232,96,42,0.12);
+      color: var(--naranja);
+      letter-spacing: 0.5px;
+    }
+
+    .modal-vacio {
+      text-align: center;
+      color: var(--texto-suave);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+
+    .modal-cerrar {
+      width: 100%;
+      margin-top: 14px;
+      padding: 11px;
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      border-radius: 10px;
+      color: var(--texto-suave);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* RESUMEN MES */
+    .resumen-mes {
+      margin: 0 16px 16px;
+      background: var(--gris-medio);
+      border: 1px solid var(--gris-borde);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .resumen-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .resumen-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: var(--naranja);
+      line-height: 1;
+    }
+
+    .resumen-lbl {
+      font-size: 10px;
+      color: var(--texto-suave);
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* LOADER */
+    .loader {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--texto-suave);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a href="crm.html" class="topbar-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div class="topbar-title">Mi <span>Agenda</span></div>
+  </div>
+
+  <!-- NAV MES -->
+  <div class="mes-nav">
+    <button class="mes-btn" onclick="cambiarMes(-1)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="mes-nombre" id="mesNombre">— <span>——</span></div>
+    <button class="mes-btn" onclick="cambiarMes(1)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="resumen-mes">
+    <div class="resumen-item">
+      <div class="resumen-num" id="resTotalCitas">0</div>
+      <div class="resumen-lbl">CITAS</div>
+    </div>
+    <div class="resumen-item">
+      <div class="resumen-num" id="resPendientes">0</div>
+      <div class="resumen-lbl">PENDIENTES</div>
+    </div>
+    <div class="resumen-item">
+      <div class="resumen-num" id="resContactos">0</div>
+      <div class="resumen-lbl">CONTACTOS</div>
+    </div>
+  </div>
+
+  <!-- DÍAS SEMANA -->
+  <div class="dias-semana">
+    <div class="dia-semana-lbl">Lu</div>
+    <div class="dia-semana-lbl">Ma</div>
+    <div class="dia-semana-lbl">Mi</div>
+    <div class="dia-semana-lbl">Ju</div>
+    <div class="dia-semana-lbl">Vi</div>
+    <div class="dia-semana-lbl">Sa</div>
+    <div class="dia-semana-lbl">Do</div>
+  </div>
+
+  <!-- GRID CALENDARIO -->
+  <div class="calendario-grid" id="calendarioGrid">
+    <div class="loader">Cargando agenda...</div>
+  </div>
+
+  <!-- MODAL DETALLE -->
+  <div class="modal-overlay" id="modalDia" onclick="cerrarModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-fecha-titulo" id="modalFechaTitulo"></div>
+      <div id="modalCitas"></div>
+      <button class="modal-cerrar" onclick="cerrarModalBtn()">Cerrar</button>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBC0jn5B7Ia6MbNqMjUY50Atghok3DCk6g",
+    authDomain: "orygn-expansion.firebaseapp.com",
+    projectId: "orygn-expansion",
+    storageBucket: "orygn-expansion.firebasestorage.app",
+    messagingSenderId: "1044610602898",
+    appId: "1:1044610602898:web:476f08bd5732b9af9e534b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let contactos = [];
+  let mesActual = new Date().getMonth();
+  let anioActual = new Date().getFullYear();
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    await cargarContactos(user.uid);
+    renderCalendario();
+  });
+
+  async function cargarContactos(uid) {
+    const q = query(collection(db, 'prospectos'), where('uid', '==', uid));
+    const snap = await getDocs(q);
+    contactos = [];
+    snap.forEach(d => contactos.push({ id: d.id, ...d.data() }));
+  }
+
+  // Devuelve todas las citas del mes/año actual como array plano
+  function citasDelMes(mes, anio) {
+    const resultado = [];
+    contactos.forEach(c => {
+      const agenda = Array.isArray(c.agenda) ? c.agenda : [];
+      agenda.forEach(a => {
+        if (!a.fecha) return;
+        const d = new Date(a.fecha);
+        if (d.getMonth() === mes && d.getFullYear() === anio) {
+          resultado.push({ contacto: c, cita: a, fecha: d });
+        }
+      });
+    });
+    resultado.sort((a, b) => a.fecha - b.fecha);
+    return resultado;
+  }
+
+  function renderCalendario() {
+    const hoy = new Date();
+    const grid = document.getElementById('calendarioGrid');
+    const mesNombre = document.getElementById('mesNombre');
+
+    mesNombre.innerHTML = `${MESES[mesActual]} <span>${anioActual}</span>`;
+
+    const citas = citasDelMes(mesActual, anioActual);
+    const ahora = new Date();
+
+    // Resumen
+    const contactosUnicos = new Set(citas.map(c => c.contacto.id));
+    const pendientes = citas.filter(c => c.fecha <= ahora && c.contacto.etapa !== 'cierre');
+    document.getElementById('resTotalCitas').textContent = citas.length;
+    document.getElementById('resPendientes').textContent = pendientes.length;
+    document.getElementById('resContactos').textContent = contactosUnicos.size;
+
+    // Primer día del mes (ajuste lunes=0)
+    const primerDia = new Date(anioActual, mesActual, 1);
+    let diaSemana = primerDia.getDay(); // 0=dom
+    diaSemana = diaSemana === 0 ? 6 : diaSemana - 1; // lunes=0
+
+    const diasEnMes = new Date(anioActual, mesActual + 1, 0).getDate();
+
+    let html = '';
+
+    // Celdas vacías al inicio
+    for (let i = 0; i < diaSemana; i++) {
+      html += `<div class="dia-celda vacio"></div>`;
+    }
+
+    // Días del mes
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+      const citasDia = citas.filter(c => c.fecha.getDate() === dia);
+      const esHoy = dia === hoy.getDate() && mesActual === hoy.getMonth() && anioActual === hoy.getFullYear();
+      const tieneCitas = citasDia.length > 0;
+
+      let chipsHTML = '';
+      const maxChips = 2;
+      citasDia.slice(0, maxChips).forEach(c => {
+        const vencida = c.fecha <= ahora && c.contacto.etapa !== 'cierre';
+        const hora = c.fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        chipsHTML += `<span class="cita-chip ${vencida ? 'vencida' : ''}">${hora} ${c.contacto.nombre || '—'}</span>`;
+      });
+      if (citasDia.length > maxChips) {
+        chipsHTML += `<span class="mas-citas">+${citasDia.length - maxChips} más</span>`;
+      }
+
+      html += `<div class="dia-celda ${esHoy ? 'hoy' : ''} ${tieneCitas ? 'tiene-citas' : ''}" onclick="abrirDia(${dia})">
+        <div class="dia-num">${dia}</div>
+        ${chipsHTML}
+      </div>`;
+    }
+
+    grid.innerHTML = html;
+  }
+
+  window.cambiarMes = function(dir) {
+    mesActual += dir;
+    if (mesActual > 11) { mesActual = 0; anioActual++; }
+    if (mesActual < 0) { mesActual = 11; anioActual--; }
+    renderCalendario();
+  };
+
+  window.abrirDia = function(dia) {
+    const ahora = new Date();
+    const citas = citasDelMes(mesActual, anioActual).filter(c => c.fecha.getDate() === dia);
+    const fechaStr = new Date(anioActual, mesActual, dia).toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' });
+
+    document.getElementById('modalFechaTitulo').innerHTML = `<span>${fechaStr}</span>`;
+
+    if (citas.length === 0) {
+      document.getElementById('modalCitas').innerHTML = `<div class="modal-vacio">Sin citas para este día</div>`;
+    } else {
+      document.getElementById('modalCitas').innerHTML = citas.map(c => {
+        const vencida = c.fecha <= ahora && c.contacto.etapa !== 'cierre';
+        const hora = c.fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        return `<div class="modal-cita-item">
+          <div class="modal-cita-hora ${vencida ? 'vencida' : ''}">${hora}${vencida ? ' · VENCIDA' : ''}</div>
+          <div class="modal-cita-nombre">${c.contacto.nombre || '—'}</div>
+          <div class="modal-cita-asunto">${c.cita.asunto || 'Sin asunto'}</div>
+          <span class="modal-cita-etapa">${c.contacto.etapa}</span>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('modalDia').classList.add('open');
+  };
+
+  window.cerrarModal = function(e) {
+    if (e.target === document.getElementById('modalDia')) {
+      document.getElementById('modalDia').classList.remove('open');
+    }
+  };
+
+  window.cerrarModalBtn = function() {
+    document.getElementById('modalDia').classList.remove('open');
+  };
+</script>
+
+</body>
+</html>
